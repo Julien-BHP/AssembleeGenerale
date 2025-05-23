@@ -1,0 +1,128 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configuration{% endblock %}
+
+{% block body %}
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="pe-7s-culture icon-gradient bg-love-kiss"></i>
+                </div>
+                <div>                    
+                    <div class="page-title-subheading">Configuration du module d'assemblée générale</div>
+                </div>
+            </div>
+            <div class="page-title-actions">
+
+            </div>
+        </div>
+    </div>
+    <div class="tabs-animation">
+        <form method="POST" enctype="multipart/form-data">
+        <div class="mb-3 card">
+            <div class="card-header-tab card-header">
+                <div class="card-header-title font-size-lg text-capitalize font-weight-normal">
+                    <i class="header-icon lnr-charts icon-gradient bg-happy-green"></i>
+                    Votre société
+                </div>
+                <div class="btn-actions-pane-right text-capitalize">
+
+                </div>
+            </div>            
+            <div class="no-gutters card-body"> 
+                <div class='row ml-5 mr-5'>
+                    <div class='col-lg-6'>
+                        <label><b>Nom de la société</b></label>
+                    </div>
+                    <div class='col-lg-6'>
+                        <input class='form-control' type="text" name='nom' required='required' value='{{ config.societe }}'/>
+                    </div> 
+                    <div class='col-lg-6 mt-3'>
+                        <label><b>Logo de la société</b></label>
+                    </div>
+                    <div class='col-lg-6 mt-3'>
+                        {% if config.logo %}
+                            <div>
+                                <img src='{{ asset(config.logo) }}' style='max-width: 50%;'/>
+                            </div>
+                        {% endif %}
+                        <input type="file" name='logo' {% if config.logo == '' %}required='required'{% endif %}/>
+                    </div>                    
+                </div>                                
+            </div>           
+        </div>
+        <div class="mb-3 card">
+            <div class="card-header-tab card-header">
+                <div class="card-header-title font-size-lg text-capitalize font-weight-normal">
+                    <i class="fa fa-fw" aria-hidden="true" style='margin-right: 20px;'></i>
+                    Administrateur
+                </div>
+                <div class="btn-actions-pane-right text-capitalize">
+
+                </div>
+            </div>
+            <div class="no-gutters card-body"> 
+                <div class='row ml-5 mr-5'>
+                    <div class='col-lg-6 mt-3'>
+                        <label><b>Email de l'administrateur</b></label>
+                    </div>
+                    <div class='col-lg-6 mt-3'>
+                        <input class="form-control" type="email" name='admin' {% if not admin %}required='required'{% endif %}/>
+                    </div>
+                    <div class='col-lg-6 mt-3'>
+                        <label><b>Mot de passe administrateur</b></label>
+                    </div>
+                    <div class='col-lg-6 mt-3'>
+                        <input class="form-control" type="password" name='password' {% if not admin %}required='required'{% endif %}/>
+                    </div>
+                    <div class='col-lg-6 mt-3'>
+                        <label><b>Répétez le mot de passe</b></label>
+                    </div>
+                    <div class='col-lg-6 mt-3'>
+                        <input class="form-control" type="password" name='password_again' {% if not admin %}required='required'{% endif %}/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center">
+            <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#reset-seance" data-backdrop="static" data-keyboard="false">Réinitialiser la séance</a>
+        </div>
+        <div class='text-right'>
+            <input class="btn btn-primary" type="submit" name="submit" value="Valider" />
+        </div>             
+        </form>
+    </div>
+{% endblock %}
+
+{% block modalBlock %}
+    <div id="reset-seance" class="modal fade bd-example-modal-lg show" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <form action='{{ path('reset_seance') }}' method="POST">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="titreModal" class="modal-title">Réinitialiser la séance</h5>
+                </div>
+                <div class="modal-body">
+                    <p>ATTENTION: vous êtes sur le point de réinitialiser la séance de l'assemblée générale. Êtes-vous sûr?</p>
+                    <div class='row ml-5 mr-5'>
+                        <div class='col-md-6'>
+                            <label><b>Conserver les points à l'ordre du jour</b></label>
+                        </div>
+                        <div class='col-md-6'>
+                            <select id="keepPoints" class='form-control' name='keepPoints'>
+                                <option value='1'>Oui</option>
+                                <option value='0'>Non</option>                                
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="cancel" class="btn btn-default" data-dismiss="modal">Annuler</a>
+                    <input type='submit' class='btn btn-success' value='Valider'/>                    
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

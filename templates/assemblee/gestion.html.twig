@@ -1,0 +1,201 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Assemblée générale{% endblock %}
+
+{% block body %}     
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="pe-7s-home icon-gradient bg-happy-itmeo"></i>
+                </div>
+                <div>
+                    Assemblée générale
+                    <div class="page-title-subheading">{{ assemblee.date  | date('d/m/Y') }}</div>
+                </div>
+            </div>
+            <div class="page-title-actions">
+                {% if assemblee.debut is null %}<a href="{{ path('update_seance') }}" class="btn-shadow btn btn-info"><i class="fa fa-fw" aria-hidden="true"></i> Modifier la séance</a>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12">
+            {% if assemblee.debut is null %}
+                <div class="main-card mb-3 card">
+                    <div class="card-header">
+                        <i class="header-icon pe-7s-users icon-gradient bg-love-kiss"></i>
+                        Administration des membres
+                    </div>
+                    <div class="card-body">
+                        <div class="bootstrap-table bootstrap4 row">
+                            <div class="fixed-table-toolbar"></div>                
+                            <div class="col-sm-6 text-center">
+                                <h5>Présences</h5>
+                                <form method="POST">
+                                    <div class="position-relative form-group col-md-12">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">Membre de l'AG</span>
+                                            </div>
+                                            <select id="AGUsers" name="userPresent" class="form-control"  required>
+                                                <option value="" selected="selected"></option>
+                                                {% for agUser in nonPresents %}
+                                                    <option value='{{ agUser.id }}'>{{ agUser.nom }} ({{agUser.username}})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <input type="submit" class="btn btn-success" name="action" value="Marquer comme présent" />
+                                </form>
+                            </div>
+                            <div class="col-sm-6  text-center">
+                                <h5>Procuration</h5>
+                                <form method="POST">
+                                    <div class="position-relative form-group col-md-12">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">Procuration de</span>
+                                            </div>
+                                            <select id="AGUsersProcFrom" name="procFrom" class="form-control" required>
+                                                <option value="" selected="selected"></option>
+                                                {% for agUser in nonPresents %}
+                                                    <option value='{{ agUser.id }}'>{{ agUser.nom }} ({{agUser.username}})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="input-group mt-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">Procuration à</span>
+                                            </div>
+                                            <select id="AGUsersProcTo" name="procTo" class="form-control"  required>
+                                                <option value="" selected="selected"></option>
+                                                {% for agUser in presents %}
+                                                    <option value='{{ agUser.id }}'>{{ agUser.nom }} ({{agUser.username}})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <input type="submit" class="btn btn-success" name="action" value="Donner procuration" />
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="main-card mb-3 card">
+                <div class="card-header">
+                    <i class="header-icon pe-7s-users icon-gradient bg-love-kiss"></i>
+                    Séance
+                </div>
+                <div class="card-body text-center">
+                    {% if assemblee.debut is null %}
+                        <h4 class='text-center'>Parts présentes ou représentées</h4>
+                        <div class='text-center'><strong>{{ partsPresentes }} sur {{ parts }} présentes ({{ percentPresent|number_format(2, '.', ',')}} %)</strong></div>
+                        <div class="mb-3 progress">
+                            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ partsPresentes }}" aria-valuemin="0" aria-valuemax="{{ parts }}" style="width: {{percentPresent}}%;">
+                            </div>
+                        </div>
+                        <a href='{{ path('gestion', {'action' : 'start'}) }}' class='btn btn-success'>Démarrer la séance</a>
+                    {% else %}
+                        <div class="bg-success text-center pt-2 pb-2 mb-3">
+                            <h4 style='color:black;'>La séance a débuté à {{ assemblee.debut  | date('H:i')  }}</h4>
+                        </div>
+                        <h4 class='text-center'>Parts présentes ou représentées</h4>
+                        <div class='text-center'><strong>{{ partsPresentes }} sur {{ parts }} présentes ({{ percentPresent|number_format(2, '.', ',')}} %)</strong></div>
+                        <div class="mb-3 progress">
+                            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ partsPresentes }}" aria-valuemin="0" aria-valuemax="{{ parts }}" style="width: {{percentPresent}}%;">
+                            </div>
+                        </div>
+                        <h4 class='text-center'>Ordre du jour</h4>
+                        <div id="accordion" class="accordion-wrapper mb-3">
+                            {% for point in points %}
+                                <div class="card"> 
+                                    <div id="heading-{{point.id}}" class="card-header">
+                                        <button type="button" data-toggle="collapse" data-target="#collapse-{{point.id}}" aria-expanded="false" aria-controls="collapse-{{point.id}}" class="text-left m-0 p-0 btn btn-link btn-block text-center">
+                                            <h5 class="m-0 p-0">{{point.ordre}}. {{ point.titre }}</h5>
+                                        </button>
+                                    </div>
+                                        {% if point.hasVote %}
+                                            <div data-parent="#accordion" id="collapse-{{point.id}}" aria-labelledby="heading-{{point.id}}" class="collapse {% if point.voteOpen and point.voteClose is null %}show{%endif%}">
+                                                <div class="card-body">
+                                                    {% if point.voteOpen is null %}
+                                                        <a href='{{ path('gestion', {'action' : 'openVote', 'point' : point.id }) }}' class='btn btn-success'>Lancer le vote</a>
+                                                    {% elseif point.voteClose is null %}
+                                                        <div class='text-center'><strong>{{ openedVote.nbVotes }} / {{ openedVote.maxVotes }} Votes</strong></div>
+                                                        <div class="mb-3 progress">
+                                                            {% if openedVote.percentPour > 0 %}
+                                                            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ openedVote.percentPour }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote.percentPour }}%;">
+                                                                Pour ({{ openedVote.percentPour|number_format(0, '.', ',') }}%)
+                                                            </div>
+                                                            {% endif %}
+                                                            {% if openedVote.percentAbst > 0 %}
+                                                            <div class="progress-bar" role="progressbar" aria-valuenow="{{ openedVote.percentAbst }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote.percentAbst }}%;">
+                                                                Abstention ({{ openedVote.percentAbst|number_format(0, '.', ',') }}%)
+                                                            </div>
+                                                            {% endif %}
+                                                            {% if openedVote.percentContre > 0 %}
+                                                            <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{{ openedVote.percentContre }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote.percentContre }}%;">
+                                                                Contre ({{ openedVote.percentContre|number_format(0, '.', ',') }}%)
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class='text-center'><strong>Détail des votes</strong></div>
+                                                        <div class='text-center'><strong>Pour: </strong>{{ openedVote.nbPour }} parts</div>
+                                                        <div class='text-center'><strong>Abstention: </strong>{{ openedVote.nbAbst }} parts</div>
+                                                        <div class='text-center'><strong>Contre: </strong>{{ openedVote.nbContre }} parts</div>
+                                                        <a href='{{ path('gestion', {'action' : 'closeVote', 'point' : point.id }) }}' class='btn btn-danger'>Clôturer le vote</a>
+                                                    {% else %}
+                                                        <div class='text-center'><strong>{{ closedVotes[point.id].nbVotes }} / {{ closedVotes[point.id].maxVotes }} Votes</strong></div>
+                                                        <div class="mb-3 progress">
+                                                            {% if closedVotes[point.id].percentPour > 0 %}
+                                                            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ closedVotes[point.id].percentPour }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id].percentPour }}%;">
+                                                                Pour ({{ closedVotes[point.id].percentPour|number_format(0, '.', ',') }}%)
+                                                            </div>
+                                                            {% endif %}
+                                                            {% if closedVotes[point.id].percentAbst > 0 %}
+                                                            <div class="progress-bar" role="progressbar" aria-valuenow="{{ closedVotes[point.id].percentAbst }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id].percentAbst }}%;">
+                                                                Abstention ({{ closedVotes[point.id].percentAbst|number_format(0, '.', ',') }}%)
+                                                            </div>
+                                                            {% endif %}
+                                                            {% if closedVotes[point.id].percentContre > 0 %}
+                                                            <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{{ closedVotes[point.id].percentContre }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id].percentContre }}%;">
+                                                                Contre ({{ closedVotes[point.id].percentContre|number_format(0, '.', ',') }}%)
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class='text-center'><strong>Détail des votes</strong></div>
+                                                        <div class='text-center'><strong>Pour: </strong>{{ closedVotes[point.id].nbPour }} parts</div>
+                                                        <div class='text-center'><strong>Abstention: </strong>{{ closedVotes[point.id].nbAbst }} parts</div>
+                                                        <div class='text-center'><strong>Contre: </strong>{{ closedVotes[point.id].nbContre }} parts</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>     
+                        {% if assemblee.fin is null %}
+                            <a href='{{ path('gestion', {'action' : 'end'}) }}' class='btn btn-danger'>Cloturer la séance</a>
+                        {% else %}
+                            <div class="bg-danger text-center pt-2 pb-2 mb-3">
+                                <h4 style='color:black;'>La séance a été cloturée à {{ assemblee.fin  | date('H:i')  }}</h4>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>   
+{% endblock %}        
+
+{% block javascriptMore %}
+    {% if assemblee.debut is not null and openedVote %}
+    $(document).ready(function() {
+        setInterval(function () {
+            location.reload();
+        },10000);
+    });
+    {% endif %}
+{% endblock %}

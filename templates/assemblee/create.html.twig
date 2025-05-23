@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Création de la séance{% endblock %}
+
+{% block body %}
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="pe-7s-culture icon-gradient bg-love-kiss"></i>
+                </div>
+                <div>                    
+                    <div class="page-title-subheading">Configuration de la séance de l'assemblée générale</div>
+                </div>
+            </div>
+            <div class="page-title-actions">
+
+            </div>
+        </div>
+    </div>
+    <div class="tabs-animation">
+        <div class="mb-3 card">
+            <div class="card-header-tab card-header">
+                <div class="card-header-title font-size-lg text-capitalize font-weight-normal">
+                    <i class="header-icon lnr-charts icon-gradient bg-happy-green"></i>
+                    Votre société
+                </div>
+                <div class="btn-actions-pane-right text-capitalize">
+
+                </div>
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="no-gutters card-body"> 
+                    <div class='row ml-5 mr-5'>
+                        <div class='col-lg-6'>
+                            <label><b>Date et heure</b></label>
+                        </div>
+                        <div class='col-lg-6'>
+                            <input id="date" name="date" class="form-control" data-toggle="datetimepicker" required="required"/>
+                        </div>                         
+                    </div> 
+                    <div class='row mt-3 ml-5 mr-5'>
+                        <div class='col-lg-6'>
+                            <label><b>Séance Extraordinaire</b></label>
+                        </div>
+                        <div class='col-lg-6'>
+                            <select name="extra" class="form-control">
+                                <option value="0">Non</option>
+                                <option value="1">Oui</option>
+                            </select>
+                        </div>                         
+                    </div>
+                </div>
+                <div class="d-block text-right card-footer">
+                    <input class="btn btn-primary" type="submit" name="submit" value="Valider" />
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

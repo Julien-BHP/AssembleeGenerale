@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta http-equiv="Content-Language" content="fr">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>{% block title %}Assemblée Générale{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
+        <!-- Disable tap highlight on IE -->
+        <meta name="msapplication-tap-highlight" content="no">
+        <link rel="stylesheet" href="{{ asset('theme/vendors/@fortawesome/fontawesome-free/css/all.min.css') }}">
+        <link rel="stylesheet" href="{{ asset('theme/vendors/ionicons-npm/css/ionicons.css') }}">
+        <link rel="stylesheet" href="{{ asset('theme/vendors/linearicons-master/dist/web-font/style.css') }}">
+        <link rel="stylesheet" href="{{ asset('theme/vendors/pixeden-stroke-7-icon-master/pe-icon-7-stroke/dist/pe-icon-7-stroke.css') }}">
+        <link href="{{ asset('theme/styles/css/base.css') }}" rel="stylesheet">
+        <link rel="stylesheet" href="{{ asset('css/jquery-ui.min.css') }}">
+        <link href="{{ asset('css/bhp.css') }}" rel="stylesheet">
+        {% block stylesheets %}{% endblock %}
+    </head>
+    <body>
+        <div class="app-container app-theme-white body-tabs-shadow fixed-header fixed-sidebar">
+            {% include 'default/partials/header.twig' %}
+            <div class="app-main">
+                <div class="app-main__outer">
+                    <div class="app-main__inner">
+                        {% block body %}
+                        
+                        {% endblock %}
+                    </div>
+                    <div class="body-block-loading d-none">
+                        <div class="loader">
+                            <div class="ball-pulse-sync">
+                                <div class="bg-success"></div>
+                                <div class="bg-success"></div>
+                                <div class="bg-success"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% include 'default/partials/footer.twig' %}
+                </div>
+            </div>
+        </div>        
+        
+        {% block modalBlock %}
+    
+        {% endblock %}
+        
+        <!-- plugin dependencies -->
+        <script type="text/javascript" src="{{ asset('theme/vendors/jquery/dist/jquery-3.4.1.min.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('js/jquery-ui.min.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('theme/vendors/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('theme/vendors/moment/moment.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('theme/vendors/bootstrap4-toggle/js/bootstrap4-toggle.min.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('theme/vendors/@chenfengyuan/datepicker/dist/datepicker.min.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('theme/vendors/daterangepicker/daterangepicker.js') }}"></script>
+
+        <script type="text/javascript" src="{{ asset('theme/vendors/block-ui/jquery.blockUI.js')}}"></script>
+
+
+        <script type="text/javascript" src="{{ asset('theme/js/form-components/datepicker.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('theme/js/app.js') }}"></script>
+        {% block javascriptLib %}{% endblock %}
+        <script>
+            {% block javascriptMore %}{% endblock %}
+        </script>  
+    </body>
+</html>

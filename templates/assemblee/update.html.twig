@@ -1,0 +1,253 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modification de la séance{% endblock %}
+
+{% block body %}
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="pe-7s-culture icon-gradient bg-love-kiss"></i>
+                </div>
+                <div>                    
+                    <div class="page-title-subheading">Configuration de la séance de l'assemblée générale</div>
+                </div>
+            </div>
+            <div class="page-title-actions">
+
+            </div>
+        </div>
+    </div>
+    <div class="tabs-animation">
+        <div class="mb-3 card">
+            <div class="card-header-tab card-header">
+                <div class="card-header-title font-size-lg text-capitalize font-weight-normal">
+                    <i class="header-icon lnr-charts icon-gradient bg-happy-green"></i>
+                    Séance
+                </div>
+                <div class="btn-actions-pane-right text-capitalize">
+
+                </div>
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="no-gutters card-body"> 
+                    <div class='row ml-5 mr-5'>
+                        <div class='col-lg-6'>
+                            <label><b>Date et heure</b></label>
+                        </div>
+                        <div class='col-lg-6'>
+                            <input id="date" name="date" class="form-control" data-toggle="datetimepicker" required="required" value="{{ seance.date | date('d/m/Y H:i') }}"/>
+                        </div>                         
+                    </div>  
+                    <div class='row mt-3 ml-5 mr-5'>
+                        <div class='col-lg-6'>
+                            <label><b>Séance Extraordinaire</b></label>
+                        </div>
+                        <div class='col-lg-6'>
+                            <select name="extra" class="form-control">
+                                <option value="0" {% if not seance.extra %}selected="selected"{% endif %}>Non</option>
+                                <option value="1" {% if seance.extra %}selected="selected"{% endif %}>Oui</option>
+                            </select>
+                        </div>                         
+                    </div>
+                    <div class='row mt-3 ml-5 mr-5'>
+                        <h3>Points à l'ordre du jour</h3>
+                        <table class="mb-0 table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Titre</th>
+                                    <th>Vote</th> 
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for point in points %}
+                                    <tr>
+                                        <th scope="row">{{ point.ordre }}</th>
+                                        <td id='titre_{{ point.id }}'>{{ point.titre }}</td>
+                                        <td  id='vote_{{ point.id }}'>{% if point.hasVote %}Oui{% else %}Non{% endif %}</td>
+                                        <td>
+                                            <a href="{{ path('move_point',{point: point.id,action: 'up'}) }}" {% if loop.first %}style="visibility: hidden;"{% endif %}class="btn btn-secondary"><i class="fa fa-fw" aria-hidden="true"></i></a>
+                                            <a href="{{ path('move_point',{point: point.id,action: 'down'}) }}" {% if loop.last %}style="visibility: hidden;"{% endif %} class="btn btn-secondary"><i class="fa fa-fw" aria-hidden="true"></i></a>
+                                            <a href="#" class="editPoint btn btn-primary" data-toggle="modal" data-target="#edit-point" data-backdrop="static" data-keyboard="false" data-point="{{ point.id }}"><i class="fa fa-fw" aria-hidden="true"></i></a>
+                                            <a href="#" class="deletePoint btn btn-danger"  data-toggle="modal" data-target="#confirm-delete" data-backdrop="static" data-keyboard="false" data-point="{{ point.id }}"><i class="fa fa-fw" aria-hidden="true"></i></a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}                                
+                            </tbody>
+                        </table> 
+                        <div class='text-center'>
+                            <a href='#' class='btn btn-success' data-toggle="modal" data-target="#edit-point"><i class="fa fa-fw mr-2" aria-hidden="true"></i>Ajouter un point</a> 
+                        </div>
+                    </div>
+                    <div class='row mt-3 ml-5 mr-5'>
+                        <h3>Membres de l'assemblée</h3>
+                        <table class="mb-0 table">
+                            <thead>
+                                <tr>                                    
+                                    <th>Nom et prénom</th>
+                                    <th>Origine</th> 
+                                    <th>Parts</th>
+                                    <th>Code d'accès</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mem in membres %}
+                                    <tr>                                        
+                                        <td>{{ mem.nom }}</td>
+                                        <td>{{ mem.typeText }}</td>
+                                        <td>{{ mem.parts }} parts</td>
+                                        <td>{{ mem.accessCode }}</td>
+                                    </tr>
+                                {% endfor %}                                
+                            </tbody>
+                        </table> 
+                        <div>
+                            <a href='#' id="reloadMembres" class='btn btn-success' data-toggle="modal" data-target="#reload-membres">Recharger la liste des membres</a> 
+                            <p>La liste des membres doit être au format .csv. Téléchargez un exemple de fichier <a href='{{ asset('file/membres.csv') }}'>en cliquant ici.</a></p>
+                            <p>ATTENTION : les codes d'accès ne doivent être composés que de chiffres</p>
+                            <p>Tableau de correspondance de valeur pour le champs Origine : <br/>
+                            1: Représentant d'une commune <br/>
+                            2: Représentant d'un CPAS <br/>
+                            3: Représentant d'une ASBL <br/>
+                            4: Représentant d'une province <br/>
+                            5: Représentant de la région <br/>
+                            6: Coopérateur privé</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-block text-right card-footer">
+                    <a href="{{ path('gestion') }}" class="btn btn-secondary">Retour à la séance</a> 
+                    <input class="btn btn-primary" type="submit" name="submit" value="Valider" />
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block modalBlock %}
+    <div id="edit-point" class="modal fade bd-example-modal-lg show" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <form action='{{ path('add_point') }}' method="POST">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="titreModal" class="modal-title">Ajouter un point</h5>
+                </div>
+                <div class="modal-body">
+                    <div class='row ml-5 mr-5'>
+                        <div class='col-md-6'>
+                            <label><b>Titre</b></label>
+                        </div>
+                        <div class='col-md-6'>
+                            <input class='form-control' type='text' id="titre" name='titre' required='required'/>
+                        </div>
+                        <div class='col-md-6 mt-3'>
+                            <label><b>Point soumis à un vote à bulletin secret</b></label>
+                        </div>
+                        <div class='col-md-6 mt-3'>
+                            <select id="vote" class='form-control' name='vote'>
+                                <option value='0'>Non</option>
+                                <option value='1'>Oui</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="cancel" class="btn btn-default" data-dismiss="modal">Annuler</a>
+                    <input type='hidden' id="action" name="action" value='add' />
+                    <input type="hidden" id="point" name="point" value="" />
+                    <input type='submit' class='btn btn-success' value='Valider'/>                    
+                </div>
+            </div>
+            </form>
+        </div>
+    </div> 
+            
+    <div id="confirm-delete" class="modal fade bd-example-modal-lg show" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Etes-vous sur?</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Etes-vous sur de vouloir supprimer ce point?</p>                    
+                </div>
+                <form action='{{ path('delete_point') }}' method="POST">
+                <div class="modal-footer">
+                    <a href="#" id="cancel" class="btn btn-default" data-dismiss="modal">Non</a>
+                    <input type="hidden" id="point" name="point" value="" />
+                    <input type='submit' class='btn btn-danger' value='Supprimer le point'/>                                        
+                </div>
+                </form> 
+            </div>
+        </div>
+    </div> 
+    <div id="reload-membres" class="modal fade bd-example-modal-lg show" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <form action='{{ path('reload_membres') }}' method="POST" enctype="multipart/form-data">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Recharger les membres</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Uploadez le fichier csv contenant les membres de l'assemblée générale. Attention le format des colonnes doit être respecté. Cette opération supprimera les membres actuels.</p>                    
+                    <div class='row ml-5 mr-5'>
+                        <div class='col-md-6'>
+                            <label><b>Fichier</b></label>
+                        </div>
+                        <div class='col-md-6'>
+                            <input type='file' name="membres" accept='.csv' required='required' />
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <a href="#" id="cancel" class="btn btn-danger" data-dismiss="modal">Annuler</a>                    
+                    <input type='submit' class='btn btn-success' value='Recharger'/>                                        
+                </div>                 
+            </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascriptMore %}
+    $(document).ready(function() {
+        $('.editPoint').click(function(event){
+            event.preventDefault();
+            $('#edit-point #point').val($(this).data('point'));
+            $('#edit-point #titre').val($('#titre_'+$(this).data('point')).html());
+            if($('#vote_'+$(this).data('point')).html() == 'Oui'){
+                $('#edit-point #vote').val(1);
+            }else{
+                $('#edit-point #vote').val(0);
+            }
+            $('#edit-point #action').val('edit');
+            $('#edit-point #titreModal').html('Modifier un point');
+        });
+        
+        $('.deletePoint').click(function(event){
+            event.preventDefault();
+            $('#confirm-delete #point').val($(this).data('point'));
+        });
+        
+        $('#edit-point #cancel').click(function(event){
+            event.preventDefault();
+            $('#edit-point #point').val('');
+            $('#edit-point #titre').val('');
+            $('#edit-point #vote').val(0);
+            $('#edit-point #action').val('add');
+            $('#edit-point #titreModal').html('Ajouter un point');
+        });
+        
+        $('#confirm-delete #cancel').click(function(event){
+            event.preventDefault();
+            $('#confirm-delete #point').val('');
+        });
+        
+        $('#reloadMembres').click(function(event){
+            event.preventDefault();
+        });
+    });
+{% endblock %}

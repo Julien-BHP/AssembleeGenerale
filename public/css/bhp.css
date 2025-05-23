@@ -1,0 +1,216 @@
+#pagination{
+    float: right;
+}
+.blockOverlay{
+    z-index: 900000 !important;
+}
+.blockMsg{
+     z-index: 900001 !important;
+}
+.batiment-tab-table{
+    width: 100%;
+}
+.desc-etage{
+    font-weight: 600;
+}
+img#peb-image {
+    width: 100px;
+}
+.uploaded-photos .photoCanvas {
+    margin-right: 25px;
+}
+.uploaded-photos .photoCanvas {
+    width: 100px;
+    height: 140px;
+    display: inline-block;
+    position: relative;
+}
+.uploaded-photos .photoCanvas .image {
+    border: 2px solid grey;
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+    border-radius: 15px;
+}
+.uploaded-photos .photoCanvas .image img {
+    object-fit: contain;
+    object-position: center;
+    height: 100px;
+    width: 100px;
+}
+.photoCanvas .hide{
+    visibility: hidden;
+}
+.accordion-wrapper .card .card-header button h5{
+    color: black;
+}
+.deletePhoto, .btnFacade{
+    margin-top: 5px;
+    width: 100px;
+    margin-bottom: 5px;
+}
+.facade .btnFacade{
+    visibility: hidden;
+}
+.photo-upload-link{
+    font-size: 22px;
+    display: block;
+    margin: auto;
+    width: 40px;
+    text-align: center;
+}
+.upload-photo{
+    display: none;
+}
+#photoCanvas {
+    display: none;
+}
+.compt-buton{
+    font-size: 50px;
+    width: 75px;
+}
+.linkDisabled{
+    cursor: not-allowed !important;
+    opacity: .5;
+}
+#ui-datepicker-div{
+    z-index: 100 !important;
+}
+#proc-accordion .card .card-header .btn-link{
+    color: #000; 
+    border: none;
+    text-decoration: none;
+    padding: .75rem 1.25rem;
+    width: 100%;
+    height: 100%;
+}
+#proc-accordion .card .card-header .btn-link:hover{
+    
+    text-decoration: none;
+    background: none;
+}
+#proc-accordion .card .card-header button i {
+    position: absolute;
+    right: 30px;
+}
+#proc-accordion .card .card-header button i.delais {
+    right: 60px;
+}
+#proc-accordion .card .status_0 {
+    background-color: rgba(124,124,124,1);
+}
+#proc-accordion .card .status_0:hover{
+    background-color: rgba(124,124,124,0.7);
+}
+#proc-accordion .card .status_1 {
+    background-color: rgba(228,208,72,1);
+}
+#proc-accordion .card .status_1:hover {
+    background-color: rgba(228,208,72,0.7);
+}
+#proc-accordion .card .status_2 {
+    background-color: rgba(82,162,186,1);    
+}
+#proc-accordion .card .status_2:hover {
+    background-color: rgba(82,162,186,0.7);    
+}
+#proc-accordion .card .status_3 {
+    background-color: rgba(114,200,84,1);
+}
+#proc-accordion .card .status_3:hover {
+    background-color: rgba(114,200,84,0.7);
+}
+#proc-accordion .card .status_4 {
+    background-color: rgba(212,48,48,1);
+}
+#proc-accordion .card .status_4:hover {
+    background-color: rgba(212,48,48,0.7);
+}
+#proc-accordion .card .status_5 {
+    background-color: rgba(228,208,72,1);
+}
+#proc-accordion .card .status_5:hover {
+    background-color: rgba(228,208,72,0.7);
+}
+#proc-accordion .card .card-body .content .row .second-line {
+    padding-top: 0;
+}
+.procCanceled{
+    background-color: rgba(212,48,48,1);
+}
+.procClosed{
+    background-color: #007bff;
+}
+.daterangepicker{
+    z-index: 2000;
+}
+.photo-upload-link {
+    margin-top: 15px;
+    width: 100px;
+    font-size: 50px;
+}
+.toggle-off.btn {
+    padding-left: 20px !important;
+}
+.br-widget{
+    display: block;
+    margin: auto;
+    width: fit-content;
+}
+.br-widget .br-current-rating{
+    margin: auto;
+}
+#detail-logement .card .complete {
+    background-color: rgba(114,200,84,1);
+}
+#detail-logement .card .complete:hover {
+    background-color: rgba(114,200,84,0.7);
+}
+#detail-logement .card .error {
+    background-color: rgba(212,48,48,1);
+}
+#detail-logement .card .error:hover {
+    background-color: rgba(212,48,48,0.7);
+}
+.photoCanvas .blockMsg{
+    background-color: transparent !important;
+    border: none !important;
+}
+#smartwizard #cles{
+    position: relative;
+}
+#smartwizard #cles #addCle{
+    position: absolute;
+    right: 0;
+}
+#smartwizard .forms-wizard .disabledLink{
+    cursor: default;
+}
+#smartwizard .forms-wizard .disabledLink .nav-link{
+    cursor: default;
+}
+.remarquesEquipTable{
+    width: 100%;
+}
+.signatureBox img {
+    height: 100px;
+}
+#signature-modal #signatureWrap canvas#signatureCanvas {
+    border: 1px solid;
+    margin: auto;
+    display: block;
+}
+.demandeStatus {
+    font-weight: bold;
+    color: #fff;
+    text-align: center;
+    line-height: 25px;
+}
+.space-before{
+    margin-top: 30px;
+}
+
+#procEntreeBlock .blockMsg {
+    border: none !important;
+    background: none !important;
+}
