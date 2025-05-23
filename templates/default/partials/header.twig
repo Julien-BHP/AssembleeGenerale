@@ -1,6 +1,6 @@
 <div class="app-header header-shadow">
     <div class="app-header__logo">
-        <div class="logo-src" {% if config is defined %}style='background: url(../../../{{config.logo}});background-repeat: no-repeat; background-size: contain;margin: auto;'{% endif %}></div>
+        <div class="logo-src" {% if config is defined %}style='background: url(.../../{{config.logo}});background-repeat: no-repeat; background-size: contain;margin: auto;'{% endif %}></div>
     </div>
     <div style='font-size: 40px;position: absolute; right: 30px;'>
         <a href='{{ path('setup') }}' style='color: black;'><i class="fa fa-fw" aria-hidden="true"></i></a>
