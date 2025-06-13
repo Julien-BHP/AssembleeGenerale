@@ -3,6 +3,6 @@
         <div class="logo-src" {% if config is defined %}style='background: url(.../../{{config.logo}});background-repeat: no-repeat; background-size: contain;margin: auto;'{% endif %}></div>
     </div>
     <div style='font-size: 40px;position: absolute; right: 30px;'>
-        <a href='{{ path('setup') }}' style='color: black;'><i class="fa fa-fw" aria-hidden="true"></i></a>
+        {% if is_granted('ROLE_ADMIN') %}<a href='{{ path('setup') }}' style='color: black;'><i class="fa fa-fw" aria-hidden="true"></i></a>{% endif %}
     </div>
 </div>

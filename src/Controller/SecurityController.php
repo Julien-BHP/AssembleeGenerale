@@ -5,13 +5,23 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use App\Entity;
 
 class SecurityController extends AbstractController
 {
+    private $doctrine;
+    
+    public function __construct(ManagerRegistry $doctine) {
+        $this->doctrine = $doctine;
+    }
+    
     #[Route(path: '/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
+        $config = $this->doctrine->getRepository(Entity\Config::class)->find(1);
+        
         // get the login error if there is one
         $error = $authenticationUtils->getLastAuthenticationError();
 
@@ -21,6 +31,7 @@ class SecurityController extends AbstractController
         return $this->render('security/login.html.twig', [
             'last_username' => $lastUsername,
             'error' => $error,
+            'config' => $config
         ]);
     }
 

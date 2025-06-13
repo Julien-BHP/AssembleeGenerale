@@ -111,6 +111,7 @@
                         <h4 class='text-center'>Ordre du jour</h4>
                         <div id="accordion" class="accordion-wrapper mb-3">
                             {% for point in points %}
+                                {% if point.ordre != 0 %}
                                 <div class="card"> 
                                     <div id="heading-{{point.id}}" class="card-header">
                                         <button type="button" data-toggle="collapse" data-target="#collapse-{{point.id}}" aria-expanded="false" aria-controls="collapse-{{point.id}}" class="text-left m-0 p-0 btn btn-link btn-block text-center">
@@ -123,57 +124,114 @@
                                                     {% if point.voteOpen is null %}
                                                         <a href='{{ path('gestion', {'action' : 'openVote', 'point' : point.id }) }}' class='btn btn-success'>Lancer le vote</a>
                                                     {% elseif point.voteClose is null %}
-                                                        <div class='text-center'><strong>{{ openedVote.nbVotes }} / {{ openedVote.maxVotes }} Votes</strong></div>
-                                                        <div class="mb-3 progress">
-                                                            {% if openedVote.percentPour > 0 %}
-                                                            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ openedVote.percentPour }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote.percentPour }}%;">
-                                                                Pour ({{ openedVote.percentPour|number_format(0, '.', ',') }}%)
+                                                        {% if point.sousPoints|length > 0 %}
+                                                            {% for sp in point.sousPoints %}
+                                                                <h4>{{ sp.titre }}</h4>
+                                                                <div class='text-center'><strong>{{ openedVote[sp.id].nbVotes }} / {{ openedVote[sp.id].maxVotes }} Votes</strong></div>
+                                                                <div class="mb-3 progress">
+                                                                    {% if openedVote[sp.id].percentPour > 0 %}
+                                                                    <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ openedVote[sp.id].percentPour }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote[sp.id].percentPour }}%;">
+                                                                        Pour ({{ openedVote[sp.id].percentPour|number_format(0, '.', ',') }}%)
+                                                                    </div>
+                                                                    {% endif %}
+                                                                    {% if openedVote[sp.id].percentAbst > 0 %}
+                                                                    <div class="progress-bar" role="progressbar" aria-valuenow="{{ openedVote[sp.id].percentAbst }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote[sp.id].percentAbst }}%;">
+                                                                        Abstention ({{ openedVote[sp.id].percentAbst|number_format(0, '.', ',') }}%)
+                                                                    </div>
+                                                                    {% endif %}
+                                                                    {% if openedVote[sp.id].percentContre > 0 %}
+                                                                    <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{{ openedVote[sp.id].percentContre }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote[sp.id].percentContre }}%;">
+                                                                        Contre ({{ openedVote[sp.id].percentContre|number_format(0, '.', ',') }}%)
+                                                                    </div>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class='text-center'><strong>Détail des votes</strong></div>
+                                                                <div class='text-center'><strong>Pour: </strong>{{ openedVote[sp.id].nbPour }} parts</div>
+                                                                <div class='text-center'><strong>Abstention: </strong>{{ openedVote[sp.id].nbAbst }} parts</div>
+                                                                <div class='text-center'><strong>Contre: </strong>{{ openedVote[sp.id].nbContre }} parts</div>                                                            
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <div class='text-center'><strong>{{ openedVote.nbVotes }} / {{ openedVote.maxVotes }} Votes</strong></div>
+                                                            <div class="mb-3 progress">
+                                                                {% if openedVote.percentPour > 0 %}
+                                                                <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ openedVote.percentPour }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote.percentPour }}%;">
+                                                                    Pour ({{ openedVote.percentPour|number_format(0, '.', ',') }}%)
+                                                                </div>
+                                                                {% endif %}
+                                                                {% if openedVote.percentAbst > 0 %}
+                                                                <div class="progress-bar" role="progressbar" aria-valuenow="{{ openedVote.percentAbst }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote.percentAbst }}%;">
+                                                                    Abstention ({{ openedVote.percentAbst|number_format(0, '.', ',') }}%)
+                                                                </div>
+                                                                {% endif %}
+                                                                {% if openedVote.percentContre > 0 %}
+                                                                <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{{ openedVote.percentContre }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote.percentContre }}%;">
+                                                                    Contre ({{ openedVote.percentContre|number_format(0, '.', ',') }}%)
+                                                                </div>
+                                                                {% endif %}
                                                             </div>
-                                                            {% endif %}
-                                                            {% if openedVote.percentAbst > 0 %}
-                                                            <div class="progress-bar" role="progressbar" aria-valuenow="{{ openedVote.percentAbst }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote.percentAbst }}%;">
-                                                                Abstention ({{ openedVote.percentAbst|number_format(0, '.', ',') }}%)
-                                                            </div>
-                                                            {% endif %}
-                                                            {% if openedVote.percentContre > 0 %}
-                                                            <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{{ openedVote.percentContre }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ openedVote.percentContre }}%;">
-                                                                Contre ({{ openedVote.percentContre|number_format(0, '.', ',') }}%)
-                                                            </div>
-                                                            {% endif %}
-                                                        </div>
-                                                        <div class='text-center'><strong>Détail des votes</strong></div>
-                                                        <div class='text-center'><strong>Pour: </strong>{{ openedVote.nbPour }} parts</div>
-                                                        <div class='text-center'><strong>Abstention: </strong>{{ openedVote.nbAbst }} parts</div>
-                                                        <div class='text-center'><strong>Contre: </strong>{{ openedVote.nbContre }} parts</div>
+                                                            <div class='text-center'><strong>Détail des votes</strong></div>
+                                                            <div class='text-center'><strong>Pour: </strong>{{ openedVote.nbPour }} parts</div>
+                                                            <div class='text-center'><strong>Abstention: </strong>{{ openedVote.nbAbst }} parts</div>
+                                                            <div class='text-center'><strong>Contre: </strong>{{ openedVote.nbContre }} parts</div>                                                            
+                                                        {% endif %}
                                                         <a href='{{ path('gestion', {'action' : 'closeVote', 'point' : point.id }) }}' class='btn btn-danger'>Clôturer le vote</a>
                                                     {% else %}
-                                                        <div class='text-center'><strong>{{ closedVotes[point.id].nbVotes }} / {{ closedVotes[point.id].maxVotes }} Votes</strong></div>
-                                                        <div class="mb-3 progress">
-                                                            {% if closedVotes[point.id].percentPour > 0 %}
-                                                            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ closedVotes[point.id].percentPour }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id].percentPour }}%;">
-                                                                Pour ({{ closedVotes[point.id].percentPour|number_format(0, '.', ',') }}%)
+                                                        {% if point.sousPoints|length > 0 %}
+                                                            {% for sp in point.sousPoints %}
+                                                                <h4>{{ sp.titre }}</h4>
+                                                                <div class='text-center'><strong>{{ closedVotes[point.id][sp.id].nbVotes }} / {{ closedVotes[point.id][sp.id].maxVotes }} Votes</strong></div>
+                                                                <div class="mb-3 progress">
+                                                                    {% if closedVotes[point.id][sp.id].percentPour > 0 %}
+                                                                    <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ closedVotes[point.id][sp.id].percentPour }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id][sp.id].percentPour }}%;">
+                                                                        Pour ({{ closedVotes[point.id][sp.id].percentPour|number_format(0, '.', ',') }}%)
+                                                                    </div>
+                                                                    {% endif %}
+                                                                    {% if closedVotes[point.id][sp.id].percentAbst > 0 %}
+                                                                    <div class="progress-bar" role="progressbar" aria-valuenow="{{ closedVotes[point.id][sp.id].percentAbst }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id][sp.id].percentAbst }}%;">
+                                                                        Abstention ({{ closedVotes[point.id][sp.id].percentAbst|number_format(0, '.', ',') }}%)
+                                                                    </div>
+                                                                    {% endif %}
+                                                                    {% if closedVotes[point.id][sp.id].percentContre > 0 %}
+                                                                    <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{{ closedVotes[point.id][sp.id].percentContre }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id][sp.id].percentContre }}%;">
+                                                                        Contre ({{ closedVotes[point.id][sp.id].percentContre|number_format(0, '.', ',') }}%)
+                                                                    </div>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class='text-center'><strong>Détail des votes</strong></div>
+                                                                <div class='text-center'><strong>Pour: </strong>{{ closedVotes[point.id][sp.id].nbPour }} parts</div>
+                                                                <div class='text-center'><strong>Abstention: </strong>{{ closedVotes[point.id][sp.id].nbAbst }} parts</div>
+                                                                <div class='text-center'><strong>Contre: </strong>{{ closedVotes[point.id][sp.id].nbContre }} parts</div>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <div class='text-center'><strong>{{ closedVotes[point.id].nbVotes }} / {{ closedVotes[point.id].maxVotes }} Votes</strong></div>
+                                                            <div class="mb-3 progress">
+                                                                {% if closedVotes[point.id].percentPour > 0 %}
+                                                                <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{{ closedVotes[point.id].percentPour }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id].percentPour }}%;">
+                                                                    Pour ({{ closedVotes[point.id].percentPour|number_format(0, '.', ',') }}%)
+                                                                </div>
+                                                                {% endif %}
+                                                                {% if closedVotes[point.id].percentAbst > 0 %}
+                                                                <div class="progress-bar" role="progressbar" aria-valuenow="{{ closedVotes[point.id].percentAbst }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id].percentAbst }}%;">
+                                                                    Abstention ({{ closedVotes[point.id].percentAbst|number_format(0, '.', ',') }}%)
+                                                                </div>
+                                                                {% endif %}
+                                                                {% if closedVotes[point.id].percentContre > 0 %}
+                                                                <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{{ closedVotes[point.id].percentContre }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id].percentContre }}%;">
+                                                                    Contre ({{ closedVotes[point.id].percentContre|number_format(0, '.', ',') }}%)
+                                                                </div>
+                                                                {% endif %}
                                                             </div>
-                                                            {% endif %}
-                                                            {% if closedVotes[point.id].percentAbst > 0 %}
-                                                            <div class="progress-bar" role="progressbar" aria-valuenow="{{ closedVotes[point.id].percentAbst }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id].percentAbst }}%;">
-                                                                Abstention ({{ closedVotes[point.id].percentAbst|number_format(0, '.', ',') }}%)
-                                                            </div>
-                                                            {% endif %}
-                                                            {% if closedVotes[point.id].percentContre > 0 %}
-                                                            <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{{ closedVotes[point.id].percentContre }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ closedVotes[point.id].percentContre }}%;">
-                                                                Contre ({{ closedVotes[point.id].percentContre|number_format(0, '.', ',') }}%)
-                                                            </div>
-                                                            {% endif %}
-                                                        </div>
-                                                        <div class='text-center'><strong>Détail des votes</strong></div>
-                                                        <div class='text-center'><strong>Pour: </strong>{{ closedVotes[point.id].nbPour }} parts</div>
-                                                        <div class='text-center'><strong>Abstention: </strong>{{ closedVotes[point.id].nbAbst }} parts</div>
-                                                        <div class='text-center'><strong>Contre: </strong>{{ closedVotes[point.id].nbContre }} parts</div>
+                                                            <div class='text-center'><strong>Détail des votes</strong></div>
+                                                            <div class='text-center'><strong>Pour: </strong>{{ closedVotes[point.id].nbPour }} parts</div>
+                                                            <div class='text-center'><strong>Abstention: </strong>{{ closedVotes[point.id].nbAbst }} parts</div>
+                                                            <div class='text-center'><strong>Contre: </strong>{{ closedVotes[point.id].nbContre }} parts</div>
+                                                        {% endif %}
                                                     {% endif %}
                                                 </div>
                                             </div>
                                         {% endif %}
                                 </div>
+                                {% endif %}
                             {% endfor %}
                         </div>     
                         {% if assemblee.fin is null %}

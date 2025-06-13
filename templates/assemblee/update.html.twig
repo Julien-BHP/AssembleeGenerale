@@ -63,17 +63,34 @@
                             </thead>
                             <tbody>
                                 {% for point in points %}
+                                    {% if point.ordre != 0 %}
                                     <tr>
                                         <th scope="row">{{ point.ordre }}</th>
                                         <td id='titre_{{ point.id }}'>{{ point.titre }}</td>
-                                        <td  id='vote_{{ point.id }}'>{% if point.hasVote %}Oui{% else %}Non{% endif %}</td>
+                                        <td id='vote_{{ point.id }}'>{% if point.hasVote %}Oui{% else %}Non{% endif %}</td>
                                         <td>
-                                            <a href="{{ path('move_point',{point: point.id,action: 'up'}) }}" {% if loop.first %}style="visibility: hidden;"{% endif %}class="btn btn-secondary"><i class="fa fa-fw" aria-hidden="true"></i></a>
+                                            <a href="{{ path('move_point',{point: point.id,action: 'up'}) }}" {% if point.ordre == 1 %}style="visibility: hidden;"{% endif %}class="btn btn-secondary"><i class="fa fa-fw" aria-hidden="true"></i></a>
                                             <a href="{{ path('move_point',{point: point.id,action: 'down'}) }}" {% if loop.last %}style="visibility: hidden;"{% endif %} class="btn btn-secondary"><i class="fa fa-fw" aria-hidden="true"></i></a>
                                             <a href="#" class="editPoint btn btn-primary" data-toggle="modal" data-target="#edit-point" data-backdrop="static" data-keyboard="false" data-point="{{ point.id }}"><i class="fa fa-fw" aria-hidden="true"></i></a>
                                             <a href="#" class="deletePoint btn btn-danger"  data-toggle="modal" data-target="#confirm-delete" data-backdrop="static" data-keyboard="false" data-point="{{ point.id }}"><i class="fa fa-fw" aria-hidden="true"></i></a>
                                         </td>
                                     </tr>
+                                    {% if point.sousPoints %}
+                                        {% for sp in point.sousPoints %}
+                                            <tr>
+                                                <th scope="row">{{ point.ordre }}.{{ loop.index }}</th>
+                                                <td id='titre_{{ sp.id }}'>{{ sp.titre }}</td>
+                                                <td id='vote_{{ sp.id }}'>{% if sp.hasVote %}Oui{% else %}Non{% endif %}</td>
+                                                <td>
+                                                    <a href="#" style="visibility: hidden;" class="btn btn-secondary"><i class="fa fa-fw" aria-hidden="true"></i></a>
+                                                    <a href="#" style="visibility: hidden;" class="btn btn-secondary"><i class="fa fa-fw" aria-hidden="true"></i></a>
+                                                    <a href="#" class="editPoint btn btn-primary" data-toggle="modal" data-target="#edit-point" data-backdrop="static" data-keyboard="false" data-point="{{ sp.id }}"><i class="fa fa-fw" aria-hidden="true"></i></a>
+                                                    <a href="#" class="deletePoint btn btn-danger"  data-toggle="modal" data-target="#confirm-delete" data-backdrop="static" data-keyboard="false" data-point="{{ sp.id }}"><i class="fa fa-fw" aria-hidden="true"></i></a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% endif %}
+                                    {% endif %}
                                 {% endfor %}                                
                             </tbody>
                         </table> 
@@ -85,27 +102,31 @@
                         <h3>Membres de l'assemblée</h3>
                         <table class="mb-0 table">
                             <thead>
-                                <tr>                                    
+                                <tr>   
+                                    <th>Identifiant</th>
                                     <th>Nom et prénom</th>
                                     <th>Origine</th> 
                                     <th>Parts</th>
                                     <th>Code d'accès</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for mem in membres %}
-                                    <tr>                                        
+                                    <tr>   
+                                        <td>{{ mem.username }}</td>
                                         <td>{{ mem.nom }}</td>
                                         <td>{{ mem.typeText }}</td>
                                         <td>{{ mem.parts }} parts</td>
                                         <td>{{ mem.accessCode }}</td>
+                                        <td><a href="#" class="editMembre btn btn-success" data-toggle="modal" data-target="#edit-membre" data-backdrop="static" data-keyboard="false"  data-id="{{ mem.id }}" data-nom="{{ mem.nom }}">Modifier nom</a></td>
                                     </tr>
                                 {% endfor %}                                
                             </tbody>
                         </table> 
                         <div>
                             <a href='#' id="reloadMembres" class='btn btn-success' data-toggle="modal" data-target="#reload-membres">Recharger la liste des membres</a> 
-                            <p>La liste des membres doit être au format .csv. Téléchargez un exemple de fichier <a href='{{ asset('file/membres.csv') }}'>en cliquant ici.</a></p>
+                            <p>La liste des membres doit être au format .csv. <a href='{{ asset('file/membres.csv') }}' class='btn btn-primary'>Télécharger un exemple de fichier</a></p>
                             <p>ATTENTION : les codes d'accès ne doivent être composés que de chiffres</p>
                             <p>Tableau de correspondance de valeur pour le champs Origine : <br/>
                             1: Représentant d'une commune <br/>
@@ -149,6 +170,19 @@
                             <select id="vote" class='form-control' name='vote'>
                                 <option value='0'>Non</option>
                                 <option value='1'>Oui</option>
+                            </select>
+                        </div>
+                        <div class='col-md-6 mt-3'>
+                            <label><b>Point Parent</b></label>
+                        </div>
+                        <div class='col-md-6 mt-3'>
+                            <select id="parent" class='form-control' name='parent'>
+                                <option value=''></option>
+                                {% for point in points %}
+                                    {% if point.ordre != 0 %}
+                                        <option value='{{ point.id }}'>{{ point.ordre}} - {{ point.titre }}</option>
+                                    {% endif %}
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
@@ -210,6 +244,32 @@
             </form>
         </div>
     </div>
+    <div id="edit-membre" class="modal fade bd-example-modal-lg show" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <form action='{{ path('edit-membre') }}' method="POST">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="titreModal" class="modal-title">Editer un membre</h5>
+                </div>
+                <div class="modal-body">
+                    <div class='row ml-5 mr-5'>
+                        <div class='col-md-6'>
+                            <label><b>Nom</b></label>
+                        </div>
+                        <div class='col-md-6'>
+                            <input class='form-control' type='text' id="nom" name='nom' required='required'/>
+                        </div>                                                
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="cancel" class="btn btn-default" data-dismiss="modal">Annuler</a>
+                    <input type="hidden" id="membre" name="membre" value="" />
+                    <input type='submit' class='btn btn-success' value='Valider'/>                    
+                </div>
+            </div>
+            </form>
+        </div>
+    </div> 
 {% endblock %}
 
 {% block javascriptMore %}
@@ -248,6 +308,12 @@
         
         $('#reloadMembres').click(function(event){
             event.preventDefault();
+        });
+        
+        $('.editMembre').click(function(event){
+            event.preventDefault();
+            $('#edit-membre #membre').val($(this).data('id'));
+            $('#edit-membre #nom').val($(this).data('nom'));
         });
     });
 {% endblock %}

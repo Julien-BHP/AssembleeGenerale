@@ -23,6 +23,7 @@ class AGPointRepository extends ServiceEntityRepository
             ->setParameter('val', 1)
             ->andWhere('p.voteOpen is not NULL')
             ->andWhere('p.voteClose is NULL')
+            ->andWhere('p.parent is NULL')
             ->getQuery()
             ->getOneOrNullResult()
         ;
@@ -35,6 +36,7 @@ class AGPointRepository extends ServiceEntityRepository
             ->setParameter('val', 1)
             ->andWhere('p.voteOpen is not NULL')
             ->andWhere('p.voteClose is not NULL')
+            ->andWhere('p.parent is NULL')
             ->getQuery()
             ->getResult()
         ;

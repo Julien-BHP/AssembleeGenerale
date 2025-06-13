@@ -5,7 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta http-equiv="Content-Language" content="fr">
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <title>Login - BHP Logements</title>
+        <title>Accès au vote</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
         <meta name="description" content="BHP Logements - Intranet">
         <!-- Disable tap highlight on IE -->
@@ -38,6 +38,11 @@
                                             <span class="d-block">Bienvenue {{ user.nom }},</span>                                            
                                         </h4>
                                         <div class="divider row"></div>
+                                            {% if voteAff.point.parent %}
+                                                 <h3 class="mt-3 text-center">                                            
+                                                    <span class="d-block">{{ voteAff.point.parent.titre }}</span>
+                                                </h3>                                           
+                                            {% endif %}
                                             <h3 class="mt-3 text-center">                                            
                                                 <span class="d-block">{{ voteAff.point.titre }}</span>
                                             </h3>
@@ -60,7 +65,7 @@
                                             <span class="d-block">Bienvenue,</span>
                                             <span class='d-block'>Pour accéder au vote en cours, veuillez renseigner votre code d'accès</span>
                                         </h4>
-                                        <form id="accessForm" method="post" autocomplete='off'>
+                                        <form id="accessForm" action="{{ path('app_assemblee') }}" method="post" autocomplete='off'>
                                             <input autocomplete="false" name="hidden" type="text" style="display:none;">
                                             <div class='row mt-4'>
                                                 <div class='col-sm-6'>
@@ -72,6 +77,13 @@
                                                     <button class="btn btn-primary">Accéder au vote</div>
                                             </div>
                                         </form>
+                                        {% if message == 'noMoreVote' %}
+                                            <div class="bg-success" style='text-align: center;'>
+                                                <span style='font-weight: bold; text-align: center;color: #ffffff;'>
+                                                    Votre vote a bien été enregistré
+                                                </span>
+                                            </div>
+                                        {% endif %}
                                         {% if error %}
                                             {% if error != 'noMoreVote' %}
                                             <div class="bg-danger" style='text-align: center;'>
@@ -92,7 +104,7 @@
                                                 <span style='font-weight: bold; text-align: center;color: #ffffff;'>
                                                     Votre vote a bien été enregistré
                                                 </span>
-                                                </span>
+                                                </div>
                                             {% endif %}
                                         {% endif %}
                                    {% endif %}                              

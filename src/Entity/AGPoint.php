@@ -40,9 +40,19 @@ class AGPoint
     #[ORM\OneToMany(targetEntity: VoteAnno::class, mappedBy: 'point')]
     private Collection $voteAnnos;
 
+    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'sousPoints')]
+    private ?self $parent = null;
+
+    /**
+     * @var Collection<int, self>
+     */
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent')]
+    private Collection $sousPoints;
+
     public function __construct()
     {
         $this->voteAnnos = new ArrayCollection();
+        $this->sousPoints = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -146,6 +156,48 @@ class AGPoint
             // set the owning side to null (unless already changed)
             if ($voteAnno->getPoint() === $this) {
                 $voteAnno->setPoint(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getParent(): ?self
+    {
+        return $this->parent;
+    }
+
+    public function setParent(?self $parent): static
+    {
+        $this->parent = $parent;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, self>
+     */
+    public function getSousPoints(): Collection
+    {
+        return $this->sousPoints;
+    }
+
+    public function addSousPoint(self $sousPoint): static
+    {
+        if (!$this->sousPoints->contains($sousPoint)) {
+            $this->sousPoints->add($sousPoint);
+            $sousPoint->setParent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSousPoint(self $sousPoint): static
+    {
+        if ($this->sousPoints->removeElement($sousPoint)) {
+            // set the owning side to null (unless already changed)
+            if ($sousPoint->getParent() === $this) {
+                $sousPoint->setParent(null);
             }
         }
 

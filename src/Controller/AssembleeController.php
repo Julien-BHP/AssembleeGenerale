@@ -10,36 +10,35 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entity;
 
-final class AssembleeController extends AbstractController
-{
+final class AssembleeController extends AbstractController {
+
     private $doctrine;
-    
+
     public function __construct(ManagerRegistry $doctine) {
         $this->doctrine = $doctine;
     }
-    
+
     #[Route('/', name: 'app_assemblee')]
-    public function index(Request $request): Response
-    {
+    public function index(Request $request): Response {
         $error = false;
         $user = false;
         $voteAff = false;
         $hasVoted = false;
-        
+
         $config = $this->doctrine->getRepository(Entity\Config::class)->find(1);
-        if($config==null){
+        if ($config == null) {
             return $this->redirectToRoute('setup');
         }
-        
-        $seance = $this->doctrine->getRepository(Entity\Seance::class)->findOneBy([],['id'=>'DESC'], 1);                
-        if($seance == null){
+
+        $seance = $this->doctrine->getRepository(Entity\Seance::class)->findOneBy([], ['id' => 'DESC'], 1);
+        if ($seance == null) {
             return $this->redirectToRoute('create_seance');
         }
-        
-        if($this->getUser()){
+
+        if ($this->getUser()) {
             return $this->redirectToRoute('gestion');
         }
-        
+
         $codeAcces = $request->get('codeAcces');
         $openedVote = $this->doctrine->getRepository(Entity\AGPoint::class)->findOpenedVote();
         if ($openedVote) {
@@ -61,8 +60,10 @@ final class AssembleeController extends AbstractController
                         }
                     } else {
                         //VOTE PAR PROCU
-                        if ($userToVote->getProcTo()->getId() != $votingUser) {
-                            $authVote = false;
+                        if($userToVote->getProcTo()){
+                            if ($userToVote->getProcTo()->getId() != $votingUser) {
+                                $authVote = false;
+                            }
                         }
                     }
                 } else {
@@ -87,8 +88,8 @@ final class AssembleeController extends AbstractController
                         $newVoteAnno->setDecision($voteValue);
                         $newVoteAnno->setParts($userToVote->getParts());
                         $now = new \DateTime();
-                        $newVoteAnno->setVoteTime($now);           
-                        
+                        $newVoteAnno->setVoteTime($now);
+
                         $hasVoted = true;
 
                         $this->doctrine->getManager()->persist($newVote);
@@ -96,7 +97,7 @@ final class AssembleeController extends AbstractController
                         $this->doctrine->getManager()->flush();
                     }
                 } else {
-                    return $this->redirectToRoute('assemblee-generale');
+                    return $this->redirectToRoute('app_assemblee');
                 }
             }
         }
@@ -108,9 +109,9 @@ final class AssembleeController extends AbstractController
             $user = $this->doctrine->getRepository(Entity\Membre::class)->findOneBy($crit);
         }
         if ($user) {
-           if ($user->isPresent()) {
-               if ($openedVote) {
-                   //TEST SI VOTE
+            if ($user->isPresent()) {
+                if ($openedVote) {
+                    //TEST SI VOTE
                     $crit = [
                         'user' => $user,
                         'point' => $openedVote
@@ -139,54 +140,115 @@ final class AssembleeController extends AbstractController
                                 }
                             }
                             if (!$voteAff) {
-                                if($hasVoted){
+                                if ($hasVoted) {
                                     $error = 'noMoreVote';
-                                }else{
+                                } else {
                                     $error = 'alreadyVoted';
-                                }                     
+                                }
                             }
-                        }else{
-                            if($hasVoted){
+                        } else {
+                            if ($hasVoted) {
                                 $error = 'noMoreVote';
-                            }else{
+                            } else {
                                 $error = 'alreadyVoted';
-                            } 
+                            }
                         }
-                    }else{
+                    } else {
                         $voteAff = $crit;
                         $voteAff['proc'] = false;
                     }
-               }else{
+                    
+                    if(!$error && count($openedVote->getSousPoints())>0){
+                        $found = false;
+                        foreach ($openedVote->getSousPoints() as $sp){
+                            $crit = [
+                                'user' => $user,
+                                'point' => $sp
+                            ];
+
+                            $vote = $this->doctrine->getRepository(Entity\Vote::class)->findOneBy($crit);
+                            if($vote){
+                                //TEST SI PROCU
+                                if ($user->isRepresent()) {
+                                    $userRepresent = $user->getProcFor();
+                                    foreach ($userRepresent as $procu) {
+                                        $crit = [
+                                            'user' => $procu,
+                                            'point' => $sp
+                                        ];
+
+                                        $vote = $this->doctrine->getRepository(Entity\Vote::class)->findOneBy($crit);
+                                        if (!$vote) {
+                                            if(!$found){
+                                                $voteAff = $crit;
+                                                $voteAff['proc'] = true;
+                                                $found = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }else{
+                                if(!$found){
+                                    $voteAff = $crit;
+                                    $voteAff['proc'] = false;
+                                    $found = true;
+                                }
+                            }
+                        }
+                        if(!$found){
+                            $newVote = new Entity\Vote();
+                            $newVote->setPoint($openedVote);
+                            $newVote->setUser($user);
+                            $this->doctrine->getManager()->persist($newVote);                        
+                            $this->doctrine->getManager()->flush();
+                            if ($user->isRepresent()) {
+                                $userRepresent = $user->getProcFor();
+                                foreach ($userRepresent as $procu) {
+                                    $newVote = new Entity\Vote();
+                                    $newVote->setPoint($openedVote);
+                                    $newVote->setUser($procu);
+                                    $this->doctrine->getManager()->persist($newVote);                        
+                                    $this->doctrine->getManager()->flush();
+                                }
+                            }
+                            $error = 'noMoreVote';
+                        }
+                    }
+                    
+                } else {
                     $error = 'noVoteOpen';
-               }
-           }else{
-               $error = 'notPresent';
-           }
-        }else {
-            if($codeAcces){
+                }
+            } else {
+                $error = 'notPresent';
+            }
+        } else {
+            if ($codeAcces) {
                 $error = 'noUser';
-            }else{
+            } else {
                 $error = 'noAccessCode';
-            }            
+            }
         }
-        
+        if($error=='noMoreVote'){
+            return $this->redirectToRoute('app_assemblee',['message'=>'noMoreVote']);
+        }
+        $message = $request->get('message');
         return $this->render('assemblee/index.html.twig', [
-            'assemblee' => $seance,
-            'error' => $error,
-            'openedVote' => $openedVote,
-            'voteAff' => $voteAff,
-            'user' => $user,
-            'config' => $config
+                    'assemblee' => $seance,
+                    'error' => $error,
+                    'openedVote' => $openedVote,
+                    'voteAff' => $voteAff,
+                    'user' => $user,
+                    'config' => $config,
+                    'message' => $message
         ]);
     }
-    
+
     #[Route('gestion', name: 'gestion')]
-    public function gestion(Request $request): Response
-    {
+    public function gestion(Request $request): Response {
         $submit = $request->get('action');
         $config = $this->doctrine->getRepository(Entity\Config::class)->find(1);
         $seance = $this->doctrine->getRepository(Entity\Seance::class)->findOneBy([], ['id' => 'DESC'], 1);
-        
+
         if ($submit) {
             $userToPresent = $request->get('userPresent');
             if ($userToPresent) {
@@ -196,18 +258,18 @@ final class AssembleeController extends AbstractController
                 $user->setDateArrivee($now);
                 $this->doctrine->getManager()->persist($user);
                 $this->doctrine->getManager()->flush();
-            }else{
+            } else {
                 $procFrom = $request->get('procFrom');
                 $procTo = $request->get('procTo');
                 if ($procFrom && $procTo) {
                     $procFromUser = $this->doctrine->getRepository(Entity\Membre::class)->find($procFrom);
                     $procToUser = $this->doctrine->getRepository(Entity\Membre::class)->find($procTo);
                     $procFromUser->setProcTo($procToUser);
-                    $procToUser->setIsRepresent(true);                    
+                    $procToUser->setIsRepresent(true);
                     $this->doctrine->getManager()->persist($procFromUser);
                     $this->doctrine->getManager()->persist($procToUser);
                     $this->doctrine->getManager()->flush();
-                }else {
+                } else {
                     switch ($submit) {
                         case "start":
                             $now = new \DateTime();
@@ -228,6 +290,10 @@ final class AssembleeController extends AbstractController
                             $point = $this->doctrine->getRepository(Entity\AGPoint::class)->find($pointToVote);
                             $now = new \DateTime();
                             $point->setVoteOpen($now);
+                            foreach ($point->getSousPoints() as $sp) {
+                                $sp->setVoteOpen($now);
+                                $this->doctrine->getManager()->persist($sp);
+                            }
                             $this->doctrine->getManager()->persist($point);
                             $this->doctrine->getManager()->flush();
                             return $this->redirectToRoute('gestion');
@@ -237,6 +303,10 @@ final class AssembleeController extends AbstractController
                             $point = $this->doctrine->getRepository(Entity\AGPoint::class)->find($pointToClose);
                             $now = new \DateTime();
                             $point->setVoteClose($now);
+                            foreach ($point->getSousPoints() as $sp) {
+                                $sp->setVoteClose($now);
+                                $this->doctrine->getManager()->persist($sp);
+                            }
                             $this->doctrine->getManager()->persist($point);
                             $this->doctrine->getManager()->flush();
                             return $this->redirectToRoute('gestion');
@@ -245,13 +315,13 @@ final class AssembleeController extends AbstractController
                 }
             }
         }
-        
+
         $nbParts = 0;
         $nbPartsPresentes = 0;
 
         $membres = $this->doctrine->getRepository(Entity\Membre::class)->findAll();
         $possibleVotes = 0;
-        
+
         foreach ($membres as $user) {
             $nbParts += $user->getParts();
             if ($user->isPresent() || $user->getProcTo()) {
@@ -260,7 +330,7 @@ final class AssembleeController extends AbstractController
             }
         }
         $percentPresent = 0;
-        if($nbParts>0){
+        if ($nbParts > 0) {
             $percentPresent = $nbPartsPresentes / $nbParts * 100;
         }
         $crit = [
@@ -275,50 +345,47 @@ final class AssembleeController extends AbstractController
         $openedVoteDetail = false;
         $openedVote = $this->doctrine->getRepository(Entity\AGPoint::class)->findOpenedVote();
         if ($openedVote) {
-            $openedVoteDetail = [];
-            $openedVoteDetail['point'] = $openedVote;
-            $openedVoteDetail['maxVotes'] = $possibleVotes;
-            $votes = $this->doctrine->getRepository(Entity\Vote::class)->findBy(['point'=>$openedVote]);
-            $openedVoteDetail['nbVotes'] = count($votes);
-            $votesAnno = $this->doctrine->getRepository(Entity\VoteAnno::class)->findBy(['point'=>$openedVote]);
-            $openedVoteDetail['totalParts'] = $nbPartsPresentes;
-            $nbPour = 0;
-            $nbAbst = 0;
-            $nbContre = 0;
-            foreach ($votesAnno as $vote) {
-                switch ($vote->getDecision()) {
-                    case 'pour':
-                        $nbPour += $vote->getParts();
-                        break;
-                    case 'abs':
-                        $nbAbst += $vote->getParts();
-                        break;
-                    case 'contre':
-                        $nbContre += $vote->getParts();
-                        break;
+            if (!$openedVote->getSousPoints()->isEmpty()) {
+                $openedVoteDetail = [];
+                foreach ($openedVote->getSousPoints() as $sp) {
+                    $openedVoteDetail[$sp->getId()] = [];
+                    $openedVoteDetail[$sp->getId()]['point'] = $sp;
+                    $openedVoteDetail[$sp->getId()]['maxVotes'] = $possibleVotes;
+                    $votes = $this->doctrine->getRepository(Entity\Vote::class)->findBy(['point' => $sp]);
+                    $openedVoteDetail[$sp->getId()]['nbVotes'] = count($votes);
+                    $votesAnno = $this->doctrine->getRepository(Entity\VoteAnno::class)->findBy(['point' => $sp]);
+                    $openedVoteDetail[$sp->getId()]['totalParts'] = $nbPartsPresentes;
+                    $nbPour = 0;
+                    $nbAbst = 0;
+                    $nbContre = 0;
+                    foreach ($votesAnno as $vote) {
+                        switch ($vote->getDecision()) {
+                            case 'pour':
+                                $nbPour += $vote->getParts();
+                                break;
+                            case 'abs':
+                                $nbAbst += $vote->getParts();
+                                break;
+                            case 'contre':
+                                $nbContre += $vote->getParts();
+                                break;
+                        }
+                    }
+                    $openedVoteDetail[$sp->getId()]['nbPour'] = $nbPour;
+                    $openedVoteDetail[$sp->getId()]['nbAbst'] = $nbAbst;
+                    $openedVoteDetail[$sp->getId()]['nbContre'] = $nbContre;
+                    $openedVoteDetail[$sp->getId()]['percentPour'] = $nbPour / $nbPartsPresentes * 100;
+                    $openedVoteDetail[$sp->getId()]['percentAbst'] = $nbAbst / $nbPartsPresentes * 100;
+                    $openedVoteDetail[$sp->getId()]['percentContre'] = $nbContre / $nbPartsPresentes * 100;
                 }
-            }
-            $openedVoteDetail['nbPour'] = $nbPour;
-            $openedVoteDetail['nbAbst'] = $nbAbst;
-            $openedVoteDetail['nbContre'] = $nbContre;
-            $openedVoteDetail['percentPour'] = $nbPour / $nbPartsPresentes * 100;
-            $openedVoteDetail['percentAbst'] = $nbAbst / $nbPartsPresentes * 100;
-            $openedVoteDetail['percentContre'] = $nbContre / $nbPartsPresentes * 100;
-        }
-        $closedVotes = $this->doctrine->getRepository(Entity\AGPoint::class)->findClosedVotes();
-        $closedVotesDetail = false;
-        if ($closedVotes) {
-            $closedVotesDetail = [];
-            foreach ($closedVotes as $closedVote) {
-                $closedVotesDetail[$closedVote->getId()] = [];
-                $closedVotesDetail[$closedVote->getId()]['maxVotes'] = $possibleVotes;
-                $crit = [
-                    'point' => $closedVote
-                ];
-                $votes = $this->doctrine->getRepository(Entity\Vote::class)->findBy($crit);
-                $closedVotesDetail[$closedVote->getId()]['nbVotes'] = count($votes);
-                $votesAnno = $this->doctrine->getRepository(Entity\VoteAnno::class)->findBy($crit);
-                $closedVotesDetail[$closedVote->getId()]['totalParts'] = $nbPartsPresentes;
+            } else {
+                $openedVoteDetail = [];
+                $openedVoteDetail['point'] = $openedVote;
+                $openedVoteDetail['maxVotes'] = $possibleVotes;
+                $votes = $this->doctrine->getRepository(Entity\Vote::class)->findBy(['point' => $openedVote]);
+                $openedVoteDetail['nbVotes'] = count($votes);
+                $votesAnno = $this->doctrine->getRepository(Entity\VoteAnno::class)->findBy(['point' => $openedVote]);
+                $openedVoteDetail['totalParts'] = $nbPartsPresentes;
                 $nbPour = 0;
                 $nbAbst = 0;
                 $nbContre = 0;
@@ -335,12 +402,87 @@ final class AssembleeController extends AbstractController
                             break;
                     }
                 }
-                $closedVotesDetail[$closedVote->getId()]['nbPour'] = $nbPour;
-                $closedVotesDetail[$closedVote->getId()]['nbAbst'] = $nbAbst;
-                $closedVotesDetail[$closedVote->getId()]['nbContre'] = $nbContre;                
-                $closedVotesDetail[$closedVote->getId()]['percentPour'] = $nbPour / $nbPartsPresentes * 100;
-                $closedVotesDetail[$closedVote->getId()]['percentAbst'] = $nbAbst / $nbPartsPresentes * 100;
-                $closedVotesDetail[$closedVote->getId()]['percentContre'] = $nbContre / $nbPartsPresentes * 100;
+                $openedVoteDetail['nbPour'] = $nbPour;
+                $openedVoteDetail['nbAbst'] = $nbAbst;
+                $openedVoteDetail['nbContre'] = $nbContre;
+                $openedVoteDetail['percentPour'] = $nbPour / $nbPartsPresentes * 100;
+                $openedVoteDetail['percentAbst'] = $nbAbst / $nbPartsPresentes * 100;
+                $openedVoteDetail['percentContre'] = $nbContre / $nbPartsPresentes * 100;
+            }
+        }
+        $closedVotes = $this->doctrine->getRepository(Entity\AGPoint::class)->findClosedVotes();
+        $closedVotesDetail = false;
+        if ($closedVotes) {
+            $closedVotesDetail = [];
+            foreach ($closedVotes as $closedVote) {
+                if(!$closedVote->getSousPoints()->isEmpty()){                         
+                    $closedVotesDetail[$closedVote->getId()] = [];
+                    foreach ($closedVote->getSousPoints() as $sp){
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()] = [];
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()]['maxVotes'] = $possibleVotes;
+                        $crit = [
+                            'point' => $sp
+                        ];
+                        $votes = $this->doctrine->getRepository(Entity\Vote::class)->findBy($crit);
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()]['nbVotes'] = count($votes);
+                        $votesAnno = $this->doctrine->getRepository(Entity\VoteAnno::class)->findBy($crit);
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()]['totalParts'] = $nbPartsPresentes;
+                        $nbPour = 0;
+                        $nbAbst = 0;
+                        $nbContre = 0;
+                        foreach ($votesAnno as $vote) {
+                            switch ($vote->getDecision()) {
+                                case 'pour':
+                                    $nbPour += $vote->getParts();
+                                    break;
+                                case 'abs':
+                                    $nbAbst += $vote->getParts();
+                                    break;
+                                case 'contre':
+                                    $nbContre += $vote->getParts();
+                                    break;
+                            }
+                        }
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()]['nbPour'] = $nbPour;
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()]['nbAbst'] = $nbAbst;
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()]['nbContre'] = $nbContre;
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()]['percentPour'] = $nbPour / $nbPartsPresentes * 100;
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()]['percentAbst'] = $nbAbst / $nbPartsPresentes * 100;
+                        $closedVotesDetail[$closedVote->getId()][$sp->getId()]['percentContre'] = $nbContre / $nbPartsPresentes * 100;
+                    }
+                }else{                    
+                    $closedVotesDetail[$closedVote->getId()] = [];
+                    $closedVotesDetail[$closedVote->getId()]['maxVotes'] = $possibleVotes;
+                    $crit = [
+                        'point' => $closedVote
+                    ];
+                    $votes = $this->doctrine->getRepository(Entity\Vote::class)->findBy($crit);
+                    $closedVotesDetail[$closedVote->getId()]['nbVotes'] = count($votes);
+                    $votesAnno = $this->doctrine->getRepository(Entity\VoteAnno::class)->findBy($crit);
+                    $closedVotesDetail[$closedVote->getId()]['totalParts'] = $nbPartsPresentes;
+                    $nbPour = 0;
+                    $nbAbst = 0;
+                    $nbContre = 0;
+                    foreach ($votesAnno as $vote) {
+                        switch ($vote->getDecision()) {
+                            case 'pour':
+                                $nbPour += $vote->getParts();
+                                break;
+                            case 'abs':
+                                $nbAbst += $vote->getParts();
+                                break;
+                            case 'contre':
+                                $nbContre += $vote->getParts();
+                                break;
+                        }
+                    }
+                    $closedVotesDetail[$closedVote->getId()]['nbPour'] = $nbPour;
+                    $closedVotesDetail[$closedVote->getId()]['nbAbst'] = $nbAbst;
+                    $closedVotesDetail[$closedVote->getId()]['nbContre'] = $nbContre;
+                    $closedVotesDetail[$closedVote->getId()]['percentPour'] = $nbPour / $nbPartsPresentes * 100;
+                    $closedVotesDetail[$closedVote->getId()]['percentAbst'] = $nbAbst / $nbPartsPresentes * 100;
+                    $closedVotesDetail[$closedVote->getId()]['percentContre'] = $nbContre / $nbPartsPresentes * 100;
+                }                
             }
         }
         $crit = [
@@ -348,74 +490,71 @@ final class AssembleeController extends AbstractController
         ];
         $points = $this->doctrine->getRepository(Entity\AGPoint::class)->findBy($crit, ["ordre" => "ASC"]);
         return $this->render('assemblee/gestion.html.twig', [
-            'config' => $config,
-            'assemblee' => $seance,
-            'points' => $points,
-            'nonPresents' => $nonPresents,
-            'presents' => $presents,
-            'parts' => $nbParts,
-            'partsPresentes' => $nbPartsPresentes,
-            'percentPresent' => $percentPresent,
-            'openedVote' => $openedVoteDetail,
-            'closedVotes' => $closedVotesDetail
-        ]);        
+                    'config' => $config,
+                    'assemblee' => $seance,
+                    'points' => $points,
+                    'nonPresents' => $nonPresents,
+                    'presents' => $presents,
+                    'parts' => $nbParts,
+                    'partsPresentes' => $nbPartsPresentes,
+                    'percentPresent' => $percentPresent,
+                    'openedVote' => $openedVoteDetail,
+                    'closedVotes' => $closedVotesDetail
+        ]);
     }
-    
+
     #[Route('create-seance', name: 'create_seance')]
-    public function createSeance(Request $request): Response
-    {
-        $config = $this->doctrine->getRepository(Entity\Config::class)->find(1);                
-        
-        $submit = $request->get('submit');        
-        if($submit){
+    public function createSeance(Request $request): Response {
+        $config = $this->doctrine->getRepository(Entity\Config::class)->find(1);
+
+        $submit = $request->get('submit');
+        if ($submit) {
             $date = \DateTime::createFromFormat('d/m/Y H:i', $request->get('date'));
             $extra = $request->get('extra');
             $seance = new Entity\Seance();
-            $seance->setDate($date);     
-            if($extra==1){
+            $seance->setDate($date);
+            if ($extra == 1) {
                 $seance->setExtra(true);
             }
             $this->doctrine->getManager()->persist($seance);
             $this->doctrine->getManager()->flush();
             return $this->redirectToRoute('app_assemblee');
         }
-        
-        return $this->render('assemblee/create.html.twig',['config' => $config]);
+
+        return $this->render('assemblee/create.html.twig', ['config' => $config]);
     }
-    
+
     #[Route('update-seance', name: 'update_seance')]
-    public function updateSeance(Request $request): Response
-    {
+    public function updateSeance(Request $request): Response {
         $config = $this->doctrine->getRepository(Entity\Config::class)->find(1);
         $seance = $this->doctrine->getRepository(Entity\Seance::class)->findOneBy([], ['id' => 'DESC'], 1);
-        $points = $this->doctrine->getRepository(Entity\AGPoint::class)->findBy(['seance'=>$seance], ['ordre'=>'ASC']);
+        $points = $this->doctrine->getRepository(Entity\AGPoint::class)->findBy(['seance' => $seance], ['ordre' => 'ASC', 'id' => 'ASC']);
         $membres = $this->doctrine->getRepository(Entity\Membre::class)->findAll();
         $submit = $request->get('submit');
-        if($submit){
+        if ($submit) {
             $date = \DateTime::createFromFormat('d/m/Y H:i', $request->get('date'));
             $extra = $request->get('extra');
-            $seance->setDate($date);     
-            if($extra==1){
+            $seance->setDate($date);
+            if ($extra == 1) {
                 $seance->setExtra(true);
-            }else{
+            } else {
                 $seance->setExtra(false);
             }
             $this->doctrine->getManager()->persist($seance);
             $this->doctrine->getManager()->flush();
         }
-        
-        return $this->render('assemblee/update.html.twig',['config' => $config,'seance'=>$seance,'points'=>$points,'membres'=>$membres]);
+
+        return $this->render('assemblee/update.html.twig', ['config' => $config, 'seance' => $seance, 'points' => $points, 'membres' => $membres]);
     }
-    
+
     #[Route('reset-seance', name: 'reset_seance')]
-    public function resetSeance(Request $request): Response
-    {
+    public function resetSeance(Request $request): Response {
         $seance = $this->doctrine->getRepository(Entity\Seance::class)->findOneBy([], ['id' => 'DESC'], 1);
         $seance->setDebut(null);
         $seance->setFin(null);
         $this->doctrine->getManager()->persist($seance);
         $membres = $this->doctrine->getRepository(Entity\Membre::class)->findAll();
-        foreach ($membres as $mem){
+        foreach ($membres as $mem) {
             $mem->setProcTo(null);
             $mem->setPresent(false);
             $mem->setDateArrivee(null);
@@ -423,50 +562,49 @@ final class AssembleeController extends AbstractController
             $this->doctrine->getManager()->persist($mem);
         }
         $votes = $this->doctrine->getRepository(Entity\Vote::class)->findAll();
-        foreach ($votes as $v){
+        foreach ($votes as $v) {
             $this->doctrine->getManager()->remove($v);
         }
         $votesAnno = $this->doctrine->getRepository(Entity\VoteAnno::class)->findAll();
-        foreach ($votesAnno as $v){
+        foreach ($votesAnno as $v) {
             $this->doctrine->getManager()->remove($v);
         }
         $keepPoints = $request->get('keepPoints');
-        foreach ($seance->getPoints() as $point){
-            if($keepPoints == 1){
+        foreach ($seance->getPoints() as $point) {
+            if ($keepPoints == 1) {
                 $point->setVoteOpen(null);
                 $point->setVoteClose(null);
                 $this->doctrine->getManager()->persist($point);
-            }else{
+            } else {
                 $this->doctrine->getManager()->remove($point);
             }
         }
         $this->doctrine->getManager()->flush();
         return $this->redirectToRoute('update_seance');
     }
-    
+
     #[Route('reload-membres', name: 'reload_membres')]
-    public function reloadMembres(Request $request): Response
-    {
-        $file = $_FILES['membres'];        
+    public function reloadMembres(Request $request): Response {
+        $file = $_FILES['membres'];
         $row = 1;
         $membres = [];
         if (($csv = fopen($file['tmp_name'], "r")) !== FALSE) {
             while (($data = fgetcsv($csv, 1000, ";")) !== FALSE) {
-                $num = count($data); 
-                if($row>1){
+                $num = count($data);
+                if ($row > 1) {
                     $membres[] = $data;
                 }
                 $row++;
             }
             fclose($csv);
         }
-        if(count($membres)>0){
+        if (count($membres) > 0) {
             $membresObj = $this->doctrine->getRepository(Entity\Membre::class)->findAll();
-            foreach ($membresObj as $mem){
+            foreach ($membresObj as $mem) {
                 $this->doctrine->getManager()->remove($mem);
             }
             $this->doctrine->getManager()->flush();
-            foreach ($membres as $mem){
+            foreach ($membres as $mem) {
                 $newMembre = new Entity\Membre();
                 $newMembre->setUsername($mem[0]);
                 $newMembre->setNom($mem[1]);
@@ -480,131 +618,151 @@ final class AssembleeController extends AbstractController
         return $this->redirectToRoute('update_seance');
     }
     
+    #[Route('edit-membre', name:'edit-membre')]
+    public function editMembre(Request $request) {
+        $membre = $request->get('membre');
+        $nom = $request->get('nom');
+        
+        $membreObj = $this->doctrine->getRepository(Entity\Membre::class)->find($membre);
+        $membreObj->setNom($nom);
+        $this->doctrine->getManager()->persist($membreObj);
+        $this->doctrine->getManager()->flush();
+        return $this->redirectToRoute('update_seance');
+    }
+
     #[Route('add-point', name: 'add_point')]
-    public function addPoint(Request $request): Response
-    {
+    public function addPoint(Request $request): Response {
         $titre = $request->get('titre');
         $vote = $request->get('vote');
         $action = $request->get('action');
-        
-        if($action=='add'){
+        $parent = $request->get('parent');
+
+        if ($action == 'add') {
             $seance = $this->doctrine->getRepository(Entity\Seance::class)->findOneBy([], ['id' => 'DESC'], 1);
             $point = new Entity\AGPoint();
             $point->setSeance($seance);
             $point->setTitre($titre);
-            if($vote==1){
+            if ($vote == 1) {
                 $point->setHasVote(true);
-            }else{
+            } else {
                 $point->setHasVote(false);
             }
-            $maxOrdre = $this->doctrine->getRepository(Entity\AGPoint::class)->findMaxOrdre();
-            $maxOrdre = $maxOrdre[1];
-            $point->setOrdre($maxOrdre+1);
-            $this->doctrine->getManager()->persist($point); 
-        }else{
+            if ($parent) {
+                $parentObj = $this->doctrine->getRepository(Entity\AGPoint::class)->find($parent);
+                $point->setParent($parentObj);
+                $point->setOrdre(0);
+            } else {
+                $maxOrdre = $this->doctrine->getRepository(Entity\AGPoint::class)->findMaxOrdre();
+                $maxOrdre = $maxOrdre[1];
+                $point->setOrdre($maxOrdre + 1);
+            }
+            $this->doctrine->getManager()->persist($point);
+        } else {
             $pointId = $request->get('point');
             $point = $this->doctrine->getRepository(Entity\AGPoint::class)->find($pointId);
             $point->setTitre($titre);
-            if($vote==1){
+            if ($vote == 1) {
                 $point->setHasVote(true);
-            }else{
+            } else {
                 $point->setHasVote(false);
             }
-            $this->doctrine->getManager()->persist($point);            
+            if ($parent) {
+                $parentObj = $this->doctrine->getRepository(Entity\AGPoint::class)->find($parent);
+                $point->setParent($parentObj);
+                $point->setOrdre(0);
+            }
+            $this->doctrine->getManager()->persist($point);
         }
         $this->doctrine->getManager()->flush();
         return $this->redirectToRoute('update_seance');
     }
-    
+
     #[Route('move-point', name: 'move_point')]
-    public function movePoint(Request $request): Response
-    {
+    public function movePoint(Request $request): Response {
         $point = $request->get('point');
         $action = $request->get('action');
-        
+
         $pointObj = $this->doctrine->getRepository(Entity\AGPoint::class)->find($point);
-        if($action=='up'){
-            $pointToMove = $this->doctrine->getRepository(Entity\AGPoint::class)->findOneBy(['ordre'=>$pointObj->getOrdre()-1]);
+        if ($action == 'up') {
+            $pointToMove = $this->doctrine->getRepository(Entity\AGPoint::class)->findOneBy(['ordre' => $pointObj->getOrdre() - 1]);
             $pointObj->setOrdre($pointToMove->getOrdre());
-            $pointToMove->setOrdre($pointToMove->getOrdre()+1);
-        }else{
-            $pointToMove = $this->doctrine->getRepository(Entity\AGPoint::class)->findOneBy(['ordre'=>$pointObj->getOrdre()+1]);
+            $pointToMove->setOrdre($pointToMove->getOrdre() + 1);
+        } else {
+            $pointToMove = $this->doctrine->getRepository(Entity\AGPoint::class)->findOneBy(['ordre' => $pointObj->getOrdre() + 1]);
             $pointObj->setOrdre($pointToMove->getOrdre());
-            $pointToMove->setOrdre($pointToMove->getOrdre()-1);
+            $pointToMove->setOrdre($pointToMove->getOrdre() - 1);
         }
         $this->doctrine->getManager()->persist($pointObj);
         $this->doctrine->getManager()->persist($pointToMove);
-        $this->doctrine->getManager()->flush();        
+        $this->doctrine->getManager()->flush();
         return $this->redirectToRoute('update_seance');
     }
-    
+
     #[Route('delete-point', name: 'delete_point')]
-    public function deletePoint(Request $request): Response
-    {
+    public function deletePoint(Request $request): Response {
         $point = $request->get('point');
         $pointObj = $this->doctrine->getRepository(Entity\AGPoint::class)->find($point);
         $ordre = $pointObj->getOrdre();
         $this->doctrine->getManager()->remove($pointObj);
         $pointsToMove = $this->doctrine->getRepository(Entity\AGPoint::class)->findOrdreSup($ordre);
-        foreach ($pointsToMove as $p){
-            $p->setOrdre($p->getOrdre()-1);
+        foreach ($pointsToMove as $p) {
+            $p->setOrdre($p->getOrdre() - 1);
             $this->doctrine->getManager()->persist($p);
         }
         $this->doctrine->getManager()->flush();
         return $this->redirectToRoute('update_seance');
     }
-    
+
     #[Route('setup', name: 'setup')]
-    public function setup(Request $request, UserPasswordHasherInterface $encoder): Response
-    {
+    public function setup(Request $request, UserPasswordHasherInterface $encoder): Response {
         $config = $this->doctrine->getRepository(Entity\Config::class)->find(1);
-        if(!$config){
+        if (!$config) {
             $config = new Entity\Config();
             $this->doctrine->getManager()->persist($config);
             $this->doctrine->getManager()->flush();
         }
         $admin = $this->doctrine->getRepository(Entity\User::class)->find(1);
         $submit = $request->get('submit');
-        if($submit){
+        if ($submit) {
             $nom = $request->get('nom');
             $email = $request->get('admin');
             $password = $request->get('password');
             $password_again = $request->get('password_again');
-                  
+
             $config->setSociete($nom);
-            
+
             $logo = $_FILES['logo'];
-            if($logo['name']!=''){
+            if ($logo['name'] != '') {
                 $ext = pathinfo($logo['name'], PATHINFO_EXTENSION);
-                move_uploaded_file($logo['tmp_name'], 'logo/logo.'.$ext); 
-                $config->setLogo('logo/logo.'.$ext);
-            }            
-            if(!$admin){
+                move_uploaded_file($logo['tmp_name'], 'logo/logo.' . $ext);
+                $config->setLogo('logo/logo.' . $ext);
+            }
+            if (!$admin) {
                 $admin = new Entity\User();
                 $admin->setRoles(['ROLE_ADMIN']);
             }
-            if($email){
+            if ($email) {
                 $admin->setEmail($email);
-            }            
+            }
             $error = false;
-            if($password){
-                if($password==$password_again){                    
+            if ($password) {
+                if ($password == $password_again) {
                     $hash = $encoder->hashPassword($admin, $password);
                     $admin->setPassword($hash);
-                }else{
+                } else {
                     $error = 'NotSame';
                 }
-            } 
-            
+            }
+
             $this->doctrine->getManager()->persist($admin);
             $this->doctrine->getManager()->persist($config);
             $this->doctrine->getManager()->flush();
-            
-            if(!$error){
+
+            if (!$error) {
                 return $this->redirectToRoute('app_assemblee');
             }
         }
-        
+
         return $this->render('assemblee/setup.html.twig', ['config' => $config, 'admin' => $admin]);
     }
 }
